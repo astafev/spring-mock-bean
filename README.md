@@ -10,3 +10,8 @@ Solution:
 1. Add @MockOnProperty("prefix.enabled=false"). Similar to spring boot's @ConditionalOnProperty
 2. Possible add reference to an abstract class that will do partly what's expected (for some simple mocking).
 
+# How it works (supposedly)
+
+* a new bean MockFactory is created. It's generated automatically with one method per bean to mock.
+* if a bean is needed to be mocked, it's definition is updated with a factory method/bean.
+* when a bean is being instantiated, it's replaced with cglib proxy

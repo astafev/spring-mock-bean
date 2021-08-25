@@ -53,16 +53,23 @@ public class DoTheFuckingMagicPostProcessor implements BeanDefinitionRegistryPos
                 .forEach(beanName -> {
                             var beanDefinition = registry.getBeanDefinition(beanName);
                             if (toMock(beanDefinition)) {
-                                registry.removeBeanDefinition(beanName);
-                                @SuppressWarnings("unchcked")
+                                /**
+                                 TODO instead of removing/adding a new bean definition.
+                                 Just set factory method and factory name and generate factory dynamically (just...)
+                                 {@link org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#instantiateUsingFactoryMethod} */
+//                                beanDefinition.setFactoryBeanName("asdf");
+//                                beanDefinition.setFactoryMethodName("asdf");
+                                @SuppressWarnings("unchecked")
                                 Class<Object> beanClass = (Class<Object>) Utils.getBeanDefinitionClass(beanDefinition);
+
+                                // TODO
+                                registry.removeBeanDefinition(beanName);
                                 registry.registerBeanDefinition(beanName,
                                         BeanDefinitionBuilder.genericBeanDefinition(beanClass,
                                                 () -> {
                                                     return mockFactory.createBean(beanClass);
                                                 }).getBeanDefinition());
                                 mockFactory.newBeanToMock(beanName, beanDefinition);
-
 
 //                                registry.registerBeanDefinition(beanName, BeanDefinitionBuilder.);
                                 // TODO register it back here?

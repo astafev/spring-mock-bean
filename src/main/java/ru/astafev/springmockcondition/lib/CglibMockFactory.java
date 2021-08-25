@@ -1,5 +1,6 @@
 package ru.astafev.springmockcondition.lib;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,11 +16,17 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.cglib.proxy.Callback;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.FixedValue;
+import org.springframework.cglib.proxy.MethodInterceptor;
+import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.core.Ordered;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.annotation.Order;
+import org.springframework.objenesis.Objenesis;
+import org.springframework.objenesis.ObjenesisStd;
+import org.springframework.objenesis.instantiator.ObjectInstantiator;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -39,8 +46,24 @@ public class CglibMockFactory implements BeanFactory {
 
     @SuppressWarnings("unchecked")
     public <T> T createBean(Class<T> type) {
-        return (T) Enhancer.create(type,
-                (FixedValue) () -> null);
+        Enhancer e = new Enhancer();
+//        e.setCallback((FixedValue) () -> null);
+        e.setCallbackType(Fix.class);
+        e.setSuperclass(type);
+        type = e.createClass();
+        Enhancer.registerCallbacks(type, new Callback[]{
+                new Fix(),
+        });
+        Objenesis objenesis = new ObjenesisStd();
+        ObjectInstantiator<T> thingyInstantiator = objenesis.getInstantiatorOf(type);
+        return thingyInstantiator.newInstance();
+    }
+
+    public static class Fix implements MethodInterceptor {
+        @Override
+        public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
+            return null;
+        }
     }
 
     @Override

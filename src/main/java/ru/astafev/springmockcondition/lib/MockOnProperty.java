@@ -6,6 +6,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import org.springframework.context.annotation.Condition;
 import org.springframework.stereotype.Component;
 
 @Target({ ElementType.TYPE })
@@ -15,4 +16,6 @@ import org.springframework.stereotype.Component;
 public @interface MockOnProperty {
     String value();
     String trueIf() default "true";
+
+    // TODO have spring conditions inside
 }

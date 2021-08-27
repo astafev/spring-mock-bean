@@ -1,12 +1,11 @@
 package ru.astafev.springmockcondition.test1;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import ru.astafev.springmockcondition.lib.MockOnProperty;
 
 @MockOnProperty("test1.mock")
-@Qualifier("doNotInstantiate")
+@Component("doNotInstantiate")
 public class DoNotInstantiate implements Interface1 {
     public DoNotInstantiate() {
         throw new AssertionError();
@@ -15,5 +14,10 @@ public class DoNotInstantiate implements Interface1 {
     @Override
     public Object execute() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> T getArgument(T o) {
+        return o;
     }
 }

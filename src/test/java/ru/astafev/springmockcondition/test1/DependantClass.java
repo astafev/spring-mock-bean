@@ -14,4 +14,7 @@ public class DependantClass {
     public void checkThatTheDependencyIsInited() {
         interface1.execute();
     }
+    public String getHello() {
+        return interface1.getArgument("Hello");
+    }
 }

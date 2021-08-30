@@ -29,6 +29,7 @@ public class MockUnwantedBeansPostProcessor implements
     public MockUnwantedBeansPostProcessor() {
         this(new CglibMockFactory());
     }
+
     @Autowired
     public MockUnwantedBeansPostProcessor(MockFactory mockFactory) {
         this.mockFactory = mockFactory;
@@ -37,33 +38,35 @@ public class MockUnwantedBeansPostProcessor implements
     @Override
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
         Arrays.stream(registry.getBeanDefinitionNames())
-                .forEach(beanName -> {
-                            var beanDefinition = registry.getBeanDefinition(beanName);
-                            if (shouldBeMocked(beanDefinition)) {
-                                /**
-                                 TODO instead of removing/adding a new bean definition.
-                                 Just set factory method and factory name and generate factory dynamically (just...)
-                                 {@link org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#instantiateUsingFactoryMethod} */
+                .forEach(beanName -> processBean(registry, beanName));
+    }
+
+    private void processBean(BeanDefinitionRegistry registry, String beanName) {
+        var beanDefinition = registry.getBeanDefinition(beanName);
+        if (shouldBeMocked(beanDefinition)) {
+            /*
+             TODO instead of removing/adding a new bean definition.
+             Just set factory method and factory name and generate factory dynamically (just...)
+             {@link org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#instantiateUsingFactoryMethod} */
 //                                beanDefinition.setFactoryBeanName("asdf");
 //                                beanDefinition.setFactoryMethodName("asdf");
-                                @SuppressWarnings("unchecked")
-                                Class<Object> beanClass = (Class<Object>) Utils.getBeanDefinitionClass(beanDefinition);
+            @SuppressWarnings("unchecked")
+            Class<Object> beanClass = (Class<Object>) Utils.getBeanDefinitionClass(beanDefinition);
 
-                                // TODO
-                                stupidBuild(registry, beanName, beanClass);
-                                mockFactory.registerNewBeanToMock(beanName, beanDefinition);
-                            }
-                        }
-                );
+            // TODO
+            stupidBuild(registry, beanName, beanClass);
+            mockFactory.registerNewBeanToMock(beanName, beanDefinition);
+        }
     }
 
     private void stupidBuild(BeanDefinitionRegistry registry, String beanName, Class<Object> beanClass) {
         registry.removeBeanDefinition(beanName);
         registry.registerBeanDefinition(beanName,
-                BeanDefinitionBuilder.genericBeanDefinition(beanClass,
-                        () -> {
-                            return mockFactory.createBean(beanClass);
-                        }).getBeanDefinition());
+                BeanDefinitionBuilder.genericBeanDefinition(
+                                beanClass,
+                                () -> mockFactory.createBean(beanName)
+                        )
+                        .getBeanDefinition());
     }
 
     private boolean shouldBeMocked(BeanDefinition beanDefinition) {

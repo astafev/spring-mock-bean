@@ -1,7 +1,6 @@
 package ru.astafev.springmockcondition.lib;
 
 import java.util.Arrays;
-import java.util.Optional;
 
 import lombok.Setter;
 import org.springframework.beans.BeansException;
@@ -13,6 +12,7 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.annotation.ScannedGenericBeanDefinition;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -24,6 +24,8 @@ public class MockUnwantedBeansPostProcessor implements
     private ApplicationContext applicationContext;
 
     private final MockFactory mockFactory;
+
+    private EvaluatorHelper conditionEvaluator;
 
 
     public MockUnwantedBeansPostProcessor() {
@@ -37,6 +39,10 @@ public class MockUnwantedBeansPostProcessor implements
 
     @Override
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+        conditionEvaluator = EvaluatorHelper.initConditionEvaluator(registry,
+                applicationContext.getEnvironment());
+
+
         Arrays.stream(registry.getBeanDefinitionNames())
                 .forEach(beanName -> processBean(registry, beanName));
     }
@@ -70,7 +76,12 @@ public class MockUnwantedBeansPostProcessor implements
     }
 
     private boolean shouldBeMocked(BeanDefinition beanDefinition) {
-        return Optional.ofNullable(beanDefinition)
+        if (beanDefinition instanceof ScannedGenericBeanDefinition) {
+            var metadata = ((ScannedGenericBeanDefinition) beanDefinition).getMetadata();
+            return conditionEvaluator.shouldSkip(metadata);
+//            metadata.getAnnotation
+        }
+        /*return Optional.ofNullable(beanDefinition)
                 // TODO maybe use ((ScannedGenericBeanDefinition) beanDefinition).getMetadata().getAnnotations().get(MockOnProperty.class).getValue("value")
                 .map(Utils::getBeanDefinitionClass)
                 .map(clazz -> clazz.getAnnotation(MockOnProperty.class))
@@ -78,7 +89,8 @@ public class MockUnwantedBeansPostProcessor implements
                     var value = applicationContext.getEnvironment().getProperty(annotation.value());
 
                     return annotation.trueIf().equals(value);
-                }).orElse(false);
+                }).orElse(false);*/
+        return false;
     }
 
     @Override
